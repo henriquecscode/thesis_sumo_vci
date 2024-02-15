@@ -1,9 +1,10 @@
 import argparse
 import os
 import sumolib
-from .string_comparison import levenshtein_similarity
-from .path_utils import true_basename
-from .datetime_utils import get_current_time_file_format
+from src.VCI.utils.string_comparison import levenshtein_similarity
+from src.VCI.utils.path_utils import true_basename
+from src.VCI.utils.datetime_utils import get_current_time_file_format
+from src.VCI.utils.sumo_lib_net import get_net_file
 from unidecode import unidecode
 
 STRING_SIMILARITY_THRESHOLD = 0.8
@@ -62,13 +63,6 @@ def main(net: sumolib.net.Net, edges: set[sumolib.net.edge.Edge], edge_type_dept
     # print(len(adjacent_same_type_edges))
     
     return extended_edges
-
-def get_net_file(sumo_net_file: str) -> sumolib.net.Net:
-    if not os.path.exists(sumo_net_file):
-        print(f"File {sumo_net_file} does not exist")
-        exit(1)
-    net = sumolib.net.readNet(sumo_net_file)
-    return net
 
 def compare_strings(string1: str, string2: str) -> float:
     # return the similarity between two strings
