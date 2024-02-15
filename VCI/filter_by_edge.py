@@ -69,17 +69,17 @@ if __name__ == "__main__":
         sumo_net_file = args.sumo_net_file
 
     if args.config_file is None:
-        config_file = "networks/filter_by_edge.cfg"
+        config_file = "netconvert_configs/filter_by_edge.cfg"
     else:
         config_file = args.config_file
 
     if args.edge_names_file is None:
-        edge_names_file = "networks/network_road_names"
+        edge_names_file = "netconvert_configs/network_road_names"
     else:
         edge_names_file = args.edge_names_file
 
     if args.edge_types_file is None:
-        edge_types_depth_file = "networks/network_road_type_depth"
+        edge_types_depth_file = "netconvert_configs/network_road_type_depth"
     else:
         edge_types_depth_file = args.edge_types_file
 
