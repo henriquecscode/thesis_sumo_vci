@@ -1,9 +1,9 @@
 import argparse
 import os
 import sumolib
-from string_comparison import levenshtein_similarity
-from path_utils import true_basename
-from datetime_utils import get_current_time_file_format
+from .string_comparison import levenshtein_similarity
+from .path_utils import true_basename
+from .datetime_utils import get_current_time_file_format
 from unidecode import unidecode
 
 STRING_SIMILARITY_THRESHOLD = 0.8

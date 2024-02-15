@@ -1,8 +1,8 @@
 import argparse
 import os
 import shutil
-from utils.run import run_system
-from utils.datetime_utils import get_current_time_file_format
+from .utils.run import run_system
+from .utils.datetime_utils import get_current_time_file_format
 
 OSM_FOLDER = "osm"
 NETWORKS_DIR = "networks"
