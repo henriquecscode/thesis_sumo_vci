@@ -30,10 +30,11 @@ def main(sumo_net_file: str, config_file: str, edge_names_file: str, edge_types_
         output_file = f"{NETWORKS_DIR}/{OUTPUT_FILE_PREFIX}{file_datetime}.net.xml"
 
     # Run command with save configuration (doesn't execute, just saves)
-    command = f"netconvert --save-configuration {copy_config_file} --sumo-net-file {sumo_net_file} --keep-edges.input-file {edges_file} --configuration-file {config_file} --output-file {output_file}"
+    base_command = f"netconvert --sumo-net-file {sumo_net_file} --keep-edges.input-file {edges_file} --configuration-file {config_file} --output-file {output_file}"
+    command = f"{base_command} --save-configuration {copy_config_file}"
     run_subprocess(command)
     # Actually run netconvert
-    command = f"netconvert --sumo-net-file {sumo_net_file} --keep-edges.input-file {edges_file} --configuration-file {config_file} --output-file {output_file}"
+    command = base_command
     run_subprocess(command, True)
 
 
