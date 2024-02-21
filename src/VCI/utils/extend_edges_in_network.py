@@ -60,13 +60,49 @@ def extend_network_by_adjacent_types_and_depth(edges: set[sumolib.net.edge.Edge]
     edges = edges.union(extended_edges_by_depth)
     return edges
 
-def main(net: sumolib.net.Net, edges: set[sumolib.net.edge.Edge], edge_type_depth: dict[str, int])-> set[sumolib.net.edge.Edge]:
-    extended_edges = extend_network_by_adjacent_types_and_depth(edges, edge_type_depth)
-    print(len(extended_edges))
-    # adjacent_same_type_edges = get_adjacent_same_type_edges(named_edges)
-    # print(len(adjacent_same_type_edges))
+def main(sumo_net_file: str, output: str, edge_names_file: str, edge_types_file: str) -> None:
+    net = get_net_file(sumo_net_file)
+
+    if output is None:
+        sumo_net_file_path = os.path.dirname(sumo_net_file)
+        sumo_net_file_truebasename, sumo_net_file_extension = true_basename(sumo_net_file)
+        output_time = get_current_time_file_format()
+        output = os.path.join(sumo_net_file_path, f"{sumo_net_file_truebasename}_extended_{output_time}.txt")
+
+    if edge_names_file is not None:
+        with open(edge_names_file, "r") as f:
+            lines= f.readlines()
+        aliases = set([line.strip() for line in lines])
+    else:
+        aliases = ["vci", "via de cintura interna", "ic23", "no de coimbroes", "Nó do Areinho"]
+
+    if edge_types_file is not None:
+        edge_type_depth = {}
+        with open(edge_types_file, "r") as f:
+            for line in f:
+                edge_type, depth = line.split(" ")
+                edge_type_depth[edge_type] = int(depth)
+    else:
+        edge_type_depth = {
+            'highway.motorway': -1,
+            'highway.motorway_link': 1,
+            'highway.primary': 2,
+            'highway.primary_link': 1,
+            'highway.secondary': 2,
+            'highway.secondary_link': 1,
+        }
+
+    print(f"edge_names: {aliases}")
+    print(f"edge_types: {edge_type_depth}")
+    named_edges = get_named_edges(net, aliases)
+    extended_edges = extend_network_by_adjacent_types_and_depth(named_edges, edge_type_depth)
+    extended_edges_ids = [edge._id for edge in extended_edges]
+
     
-    return extended_edges
+
+    print(f"Writing extended edges to {output}")
+    with open(output, "w") as f:
+        f.writelines([f"{edge_id}\n" for edge_id in extended_edges_ids])
 
 def compare_strings(string1: str, string2: str) -> float:
     # return the similarity between two strings
@@ -120,51 +156,7 @@ if __name__ == "__main__":
     output: str = args.output
     edge_names_file: str = args.edge_names_file
     edge_types_file: str = args.edge_types_file
-    
-    net = get_net_file(sumo_net_file)
-
-    if output is None:
-        sumo_net_file_path = os.path.dirname(sumo_net_file)
-        sumo_net_file_truebasename, sumo_net_file_extension = true_basename(sumo_net_file)
-        output_time = get_current_time_file_format()
-        output = os.path.join(sumo_net_file_path, f"{sumo_net_file_truebasename}_extended_{output_time}.txt")
-
-    if edge_names_file is not None:
-        with open(edge_names_file, "r") as f:
-            lines= f.readlines()
-        aliases = set([line.strip() for line in lines])
-    else:
-        aliases = ["vci", "via de cintura interna", "ic23", "no de coimbroes", "Nó do Areinho"]
-
-    if edge_types_file is not None:
-        edge_type_depth = {}
-        with open(edge_types_file, "r") as f:
-            for line in f:
-                edge_type, depth = line.split(" ")
-                edge_type_depth[edge_type] = int(depth)
-    else:
-        edge_type_depth = {
-            'highway.motorway': -1,
-            'highway.motorway_link': 1,
-            'highway.primary': 2,
-            'highway.primary_link': 1,
-            'highway.secondary': 2,
-            'highway.secondary_link': 1,
-        }
-
-    print(f"edge_names: {aliases}")
-    print(f"edge_types: {edge_type_depth}")
-    named_edges = get_named_edges(net, aliases)
-    extended_edges = main(net=net, edges=named_edges, edge_type_depth=edge_type_depth)
-    extended_edges_ids = [edge._id for edge in extended_edges]
-
-    
-
-    print(f"Writing extended edges to {output}")
-    with open(output, "w") as f:
-        f.writelines([f"{edge_id}\n" for edge_id in extended_edges_ids])
-
-    exit(0)
+    main(sumo_net_file, output, edge_names_file, edge_types_file)
 
 
 

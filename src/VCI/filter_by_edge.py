@@ -5,6 +5,7 @@ import os
 import shutil
 from src.VCI.utils.run import run_subprocess
 from src.VCI.utils.datetime_utils import get_current_time_file_format
+import src.VCI.utils.extend_edges_in_network as extend_edges_in_network
 
 OSM_FOLDER = "osm"
 NETWORKS_DIR = "networks"
@@ -23,8 +24,8 @@ def main(sumo_net_file: str, config_file: str, edge_names_file: str, edge_types_
 
     edges_file_name = f"{EDGE_FILE_PREFIX}{file_datetime}.txt"
     edges_file = os.path.join(config_file_dir, edges_file_name)
-    command = f"python utils\\extend_edges_in_network.py {sumo_net_file} -o {edges_file} --edge-names-file {edge_names_file} --edge-types-file {edge_types_depth_file}"
-    run_subprocess(command)
+
+    extend_edges_in_network.main(sumo_net_file, edges_file, edge_names_file, edge_types_depth_file) 
     
     if "output_file" in options:
         output_file = options["output_file"]
