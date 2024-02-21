@@ -3,23 +3,20 @@
 import argparse
 import os
 import sumolib
-from xml.dom import minidom
+import lxml.etree as ET
 from src.VCI.utils.sumo_lib_net import get_net_file
 from src.VCI.utils.path_utils import true_basename
 from src.VCI.utils.datetime_utils import get_current_time_file_format
 import pandas as pd
+from src.VCI.utils.sumo_lib_net import create_additionals_root
+from src.VCI.utils.xml_utils import write_root
 
 DEFAULT_SUMO_NET_FILE = "networks\\filter_by_edge.net.xml"
 DEFAULT_NETWORK_CONNECTIONS_FILE = "networks\\filter_by_edge_system_connections.txt"
+DEFAULT_SUMO_ADDITIONALS_FILE = "networks\\filter_by_edge.add.xml"
 NETWORK_ADDITIONALS_FILENAME_SUFFIX = "_network_additionals"
 CALIBRATOR_LENGTH = 2.0
-def main(net: sumolib.net.Net, junctions: set[sumolib.net.node.Node], *args, **kwargs) -> minidom.Element:
-    xml_file = minidom.Document()
-
-    root = xml_file.createElement("additional")
-    root.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
-    root.setAttribute("xsi:noNamespaceSchemaLocation", "http://sumo.dlr.de/xsd/additional_file.xsd")
-
+def main(root: ET.Element, net: sumolib.net.Net, junctions: set[sumolib.net.node.Node], *args, **kwargs) -> ET.Element:
     for junction in junctions:
         incoming = junction.getIncoming()
         incoming_is_entry = [False] * len(incoming)
@@ -30,42 +27,36 @@ def main(net: sumolib.net.Net, junctions: set[sumolib.net.node.Node], *args, **k
         
         all_edges_with_entry = list(incoming_with_is_entry) + list(outgoing_with_is_entry)
         for edge, is_entry in all_edges_with_entry:
-            calibrators = get_edges_lane_calibrator_elements(xml_file, edge, is_entry)
-            for calibrator in calibrators:
-                root.appendChild(calibrator)
+            for lane in edge.getLanes():
+                calibrator = get_lanes_lane_calibrator_element(lane, edge, is_entry)
+                root.append(calibrator)
         
     return root
 
-def get_lanes_lane_calibrator_element(xml_file: minidom.Document, lane:sumolib.net.lane.Lane, parent_edge: sumolib.net.edge.Edge, is_entry: bool, *args, **kwargs) -> minidom.Element:
+def get_lanes_lane_calibrator_element(lane:sumolib.net.lane.Lane, parent_edge: sumolib.net.edge.Edge, is_entry: bool, *args, **kwargs) -> ET.Element:
     lane_id = lane.getID()
     calibrator_id = f"ca_{lane_id}"
-    calibrator = xml_file.createElement("calibrator")
-    calibrator.setAttribute("id", calibrator_id)
-    calibrator.setAttribute("lane", lane_id)
+    calibrator = ET.Element("calibrator")
+    calibrator.set("id", calibrator_id)
+    calibrator.set("lane", lane_id)
     if is_entry:
         calibrator_pos = str(0.0)
     else:
         calibrator_pos = str(lane.getLength()-CALIBRATOR_LENGTH)
-    calibrator.setAttribute("pos", calibrator_pos)
-    calibrator.setAttribute("output", calibrator_id)
+    calibrator.set("pos", calibrator_pos)
+    calibrator.set("output", calibrator_id)
     return calibrator
-
-def get_edges_lane_calibrator_elements(xml_file: minidom.Document, edge:sumolib.net.edge.Edge, is_entry:bool, *args, **kwargs) -> set[minidom.Element]:
-    calibrator_elements = set()
-    for lane in edge.getLanes():
-        calibrator = get_lanes_lane_calibrator_element(xml_file, lane, edge, is_entry)
-        calibrator_elements.add(calibrator)
-    
-    return calibrator_elements
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Description of your script')
 
     # Add command line arguments
     parser.add_argument('--sumo-net-file', '-s', type=str, help='Path to the SUMO network file')
+    parser.add_argument('--network-additionals-file', type=str, help='Path to the network additionals file')
     parser.add_argument('--network-connections-file', type=str, help='Path to the network connections file')
     parser.add_argument("--output", "-o", type=str, help="Path to the output file")
+    parser.add_argument('--overwrite', action='store_true', help='Overwrite the input network additionals file. Ignore Output argument')
+
 
 
     #parser.add_argument('arg1', type=str, help='Description of arg1')
@@ -88,13 +79,26 @@ if __name__ == "__main__":
     else:
         network_connections_file = args.network_connections_file
 
-    if args.output is None:
-        sumo_net_file_path = os.path.dirname(sumo_net_file)
-        sumo_net_file_truebasename, sumo_net_file_extension = true_basename(sumo_net_file)
-        output_time = get_current_time_file_format()
-        output = os.path.join(sumo_net_file_path, f"{sumo_net_file_truebasename}{NETWORK_ADDITIONALS_FILENAME_SUFFIX}_{output_time}.add.xml")
+    if args.network_additionals_file is None:
+        network_additionals_file = DEFAULT_SUMO_ADDITIONALS_FILE
+        root = create_additionals_root()
+
     else:
-        output = args.output
+        network_additionals_file = args.network_additionals_file
+        parser = ET.XMLParser(remove_blank_text=True)
+        root = ET.parse(args.network_additionals_file, parser).getroot()
+
+
+    if args.overwrite and args.network_additionals_file is not None:
+            output_file = network_additionals_file
+    else:
+        if args.output is None:
+            sumo_net_file_path = os.path.dirname(sumo_net_file)
+            sumo_net_file_truebasename, sumo_net_file_extension = true_basename(sumo_net_file)
+            output_time = get_current_time_file_format()
+            output = os.path.join(sumo_net_file_path, f"{sumo_net_file_truebasename}{NETWORK_ADDITIONALS_FILENAME_SUFFIX}_{output_time}.add.xml")
+        else:
+            output = args.output
 
     # Call the main function with parsed arguments
     net = get_net_file(sumo_net_file)
@@ -102,8 +106,8 @@ if __name__ == "__main__":
     junctions_ids = df['id'].astype('str').tolist()
 
     junctions = {net.getNode(junc_id) for junc_id in junctions_ids}
-    xml_file = main(net, junctions, args)
-    xml_file_str = xml_file.toprettyxml(indent="\t")
+    
+    root = main(root, net, junctions, args)
 
-    with open(output, "w") as f:
-        f.write(xml_file_str)
+    # Save to mem
+    write_root(root, output)
