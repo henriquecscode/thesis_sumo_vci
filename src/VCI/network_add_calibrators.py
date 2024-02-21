@@ -38,9 +38,6 @@ def main(net: sumolib.net.Net, junctions: set[sumolib.net.node.Node], *args, **k
 
 def get_lanes_lane_calibrator_element(xml_file: minidom.Document, lane:sumolib.net.lane.Lane, parent_edge: sumolib.net.edge.Edge, is_entry: bool, *args, **kwargs) -> minidom.Element:
     lane_id = lane.getID()
-    print(f"parent_edgelength {parent_edge.getLength()} lane_id {lane_id} lane_length {lane.getLength()} is_entry {is_entry}")
-    if lane_id in ["54375651#0_0", "27292207#0_0"]:
-        pass
     calibrator_id = f"ca_{lane_id}"
     calibrator = xml_file.createElement("calibrator")
     calibrator.setAttribute("id", calibrator_id)
@@ -102,7 +99,7 @@ if __name__ == "__main__":
     # Call the main function with parsed arguments
     net = get_net_file(sumo_net_file)
     df = pd.read_csv(network_connections_file)
-    junctions_ids = df['id'].tolist()
+    junctions_ids = df['id'].astype('str').tolist()
 
     junctions = {net.getNode(junc_id) for junc_id in junctions_ids}
     xml_file = main(net, junctions, args)
