@@ -3,18 +3,11 @@
 import argparse
 import os
 import sumolib
+from src.VCI.utils.sumo_lib_net import is_dead_end_junction, is_entry_junction, is_exit_junction
 
 DEFAULT_SUMO_NET_FILE = "networks\\filter_by_edge.net.xml"
 NETWORK_CONNECTIONS_FILENAME_SUFFIX = "_network_connections"
 
-def is_dead_end_junction(junction: sumolib.net.node.Node) -> bool:
-    return junction.getType() == 'dead_end'
-
-def is_entry_junction(junction: sumolib.net.node.Node) -> bool:
-    return len(junction.getIncoming()) == 0
-
-def is_exit_junction(junction: sumolib.net.node.Node) -> bool:
-    return len(junction.getOutgoing()) == 0
 
 def get_junc_data(junction: sumolib.net.node.Node) -> tuple[str, float, float, str]:
     junc_id = junction.getID()
