@@ -5,7 +5,7 @@ import os
 import sumolib
 
 DEFAULT_SUMO_NET_FILE = "networks\\filter_by_edge.net.xml"
-SYSTEM_CONNECTIONS_FILENAME_SUFFIX = "_system_connections"
+NETWORK_CONNECTIONS_FILENAME_SUFFIX = "_network_connections"
 
 def is_dead_end_junction(junction: sumolib.net.node.Node) -> bool:
     return junction.getType() == 'dead_end'
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         sumo_net_file_path = os.path.dirname(sumo_net_file)
         sumo_net_file_truebasename, sumo_net_file_extension = true_basename(sumo_net_file)
         output_time = get_current_time_file_format()
-        output = os.path.join(sumo_net_file_path, f"{sumo_net_file_truebasename}{SYSTEM_CONNECTIONS_FILENAME_SUFFIX}_{output_time}.txt")
+        output = os.path.join(sumo_net_file_path, f"{sumo_net_file_truebasename}{NETWORK_CONNECTIONS_FILENAME_SUFFIX}_{output_time}.txt")
     else:
         output = args.output
 
