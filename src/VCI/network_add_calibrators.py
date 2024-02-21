@@ -14,7 +14,7 @@ from src.VCI.utils.xml_utils import write_root
 DEFAULT_SUMO_NET_FILE = "networks\\filter_by_edge.net.xml"
 DEFAULT_NETWORK_CONNECTIONS_FILE = "networks\\filter_by_edge_system_connections.txt"
 DEFAULT_SUMO_ADDITIONALS_FILE = "networks\\filter_by_edge.add.xml"
-NETWORK_ADDITIONALS_FILENAME_SUFFIX = "_network_additionals"
+NETWORK_ADDITIONALS_FILENAME_SUFFIX = "_calibrators"
 CALIBRATOR_LENGTH = 2.0
 def main(root: ET.Element, net: sumolib.net.Net, junctions: set[sumolib.net.node.Node], *args, **kwargs) -> ET.Element:
     for junction in junctions:

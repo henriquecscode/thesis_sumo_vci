@@ -10,7 +10,7 @@ from src.VCI.utils.xml_utils import write_root
 
 DEFAULT_SUMO_NET_FILE = "networks\\filter_by_edge.net.xml"
 DEFAULT_SUMO_ADDITIONALS_FILE = "networks\\filter_by_edge.add.xml"
-NETWORK_ADDITIONALS_FILENAME_SUFFIX = "_network_additionals"
+NETWORK_ADDITIONALS_FILENAME_SUFFIX = "_counters"
 DEFAULT_INDUCTION_LOOP_PERIOD = 300.00
 DEFAULT_INDUCTION_LOOP_OFFSET = 0
 DEFAULT_INDUCTION_LOOP_OUTPUT_NAME = "e_output.xml"
