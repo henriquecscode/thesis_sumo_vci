@@ -1,3 +1,7 @@
+# Takes a sumo network and a set of edges and returns a new set of edges
+# The new set of edges is derived from the original according to
+#   the types of edge that are adjacent to the original set of edges
+#   the names of the edges
 import argparse
 import os
 import sumolib

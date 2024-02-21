@@ -1,3 +1,5 @@
+# Takes a network and a set of edges
+# Runs netconvert to create a new network with just the set of edges.
 import argparse
 import os
 import shutil

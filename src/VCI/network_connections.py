@@ -1,3 +1,5 @@
+# Takes a network and determines which junctions are at the edge of the network, making them entry or exit junctions
+# Saves a file with the junctions, their coordinates, and their type (entry, exit or entry_exit) to memory
 import argparse
 import os
 import sumolib
