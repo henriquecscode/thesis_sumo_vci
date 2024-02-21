@@ -94,7 +94,10 @@ def main(sumo_net_file: str, output: str, edge_names_file: str, edge_types_file:
 
     print(f"edge_names: {aliases}")
     print(f"edge_types: {edge_type_depth}")
-    named_edges = get_named_edges(net, aliases)
+    if len(aliases) == 0:
+        named_edges = get_named_edges(net, aliases)
+    else:
+        named_edges = net.getEdges()
     extended_edges = extend_network_by_adjacent_types_and_depth(named_edges, edge_type_depth)
     extended_edges_ids = [edge._id for edge in extended_edges]
 
