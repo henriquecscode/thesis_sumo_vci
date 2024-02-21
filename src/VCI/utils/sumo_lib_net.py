@@ -1,5 +1,6 @@
 import sumolib
 import os
+import lxml.etree as ET
 
 def get_net_file(sumo_net_file: str) -> sumolib.net.Net:
     if not os.path.exists(sumo_net_file):
@@ -15,3 +16,14 @@ def is_entry_junction(junction: sumolib.net.node.Node) -> bool:
 
 def is_exit_junction(junction: sumolib.net.node.Node) -> bool:
     return len(junction.getOutgoing()) == 0
+
+def create_additionals_root() -> ET.ElementTree:
+    # <additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
+
+    NSMAP = {
+        None: "http://sumo.dlr.de/xsd/additional_file.xsd",
+        "xsi": "http://www.w3.org/2001/XMLSchema-instance"
+    }
+    tree = ET.ElementTree(ET.Element("additional", nsmap=NSMAP))
+    root = tree.getroot()
+    return root
