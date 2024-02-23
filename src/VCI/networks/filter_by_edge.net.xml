@@ -21,7 +21,7 @@
     </processing>
 
     <edge_removal>
-        <keep-edges.input-file value="netconvert_configs\edges_2024-02-21-14-37-55.txt"/>
+        <keep-edges.input-file value="network_configs\edges_2024-02-21-14-37-55.txt"/>
         <keep-edges.components value="1"/>
     </edge_removal>
 

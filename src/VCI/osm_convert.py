@@ -74,7 +74,7 @@ if __name__ == "__main__":
         osm_folder = args.osm_folder
 
     if args.config_file is None:
-        config_file = "netconvert_configs/base.cfg"
+        config_file = "network_configs/base.cfg"
     else:
         config_file = args.config_file
 
