@@ -49,8 +49,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Description of your script')
 
     parser.add_argument('--sumo-net-file', type=str, help='Path to the SUMO network file')
-    parser.add_argument('--network-additionals-file', type=str, help='Path to the network additionals file')
     parser.add_argument('--output', type=str, help='Path to the output file')
+    parser.add_argument('--network-additionals-file', type=str, help='Path to the network additionals file')
     parser.add_argument('--overwrite', action='store_true', help='Overwrite the input network additionals file. Ignore Output argument')
     # Add command line arguments
     #parser.add_argument('arg1', type=str, help='Description of arg1')

@@ -52,9 +52,9 @@ def parse_arguments():
 
     # Add command line arguments
     parser.add_argument('--sumo-net-file', '-s', type=str, help='Path to the SUMO network file')
-    parser.add_argument('--network-additionals-file', type=str, help='Path to the network additionals file')
     parser.add_argument('--network-connections-file', type=str, help='Path to the network connections file')
     parser.add_argument("--output", "-o", type=str, help="Path to the output file")
+    parser.add_argument('--network-additionals-file', type=str, help='Path to the network additionals file')
     parser.add_argument('--overwrite', action='store_true', help='Overwrite the input network additionals file. Ignore Output argument')
 
 
