@@ -15,18 +15,15 @@ DEFAULT_SYSTEMS_CUT_FILE = "network_configs/cut_edges.txt"
 DEFAULT_CONFIG_FILE = "network_configs/raw.cfg"
 SYSTEMS_FILENAME_SUFFIX = "_cut_systems"
 
-def mydeb(id):
-    if id in ["95984918", "390157775", "1093951608", "497924851", "915252791"]:
-        pass
 # Expands the set of edges to include the edges that are continuous to the ones in the set
 # That means, there is a determinism in the flow of traffic
+    
 def get_continuous_edges(net: sumolib.net.Net, all_edges_ids: set[str], to_get_continuous_edges_ids: set[str], *args, **kwargs) -> set[str]:
     all_edges_ids = all_edges_ids.union(to_get_continuous_edges_ids)
     if len(to_get_continuous_edges_ids) == 0:
         return all_edges_ids
     found_continuous_edges = set()
     for edge_id in to_get_continuous_edges_ids:
-        mydeb(edge_id)
         edge: sumolib.net.edge.Edge = net.getEdge(edge_id)
 
         from_node: sumolib.net.node.Node = edge.getFromNode()
@@ -37,36 +34,84 @@ def get_continuous_edges(net: sumolib.net.Net, all_edges_ids: set[str], to_get_c
         from_node_incoming_edges = from_node.getIncoming()
         from_node_outgoing_edges = from_node.getOutgoing()
 
-        if len(to_node_incoming_edges) <= 1 and len(to_node_outgoing_edges) <= 1:
-            other_edge = to_node_outgoing_edges[0]
-            other_edge_id = other_edge.getID()
-            mydeb(other_edge_id)
-            if other_edge_id not in all_edges_ids:
-                found_continuous_edges.add(other_edge_id)
-        if len(from_node_incoming_edges) <= 1 and len(from_node_outgoing_edges) <= 1:
-            other_edge = from_node_incoming_edges[0]
-            other_edge_id = other_edge.getID()
-            mydeb(other_edge_id)
-            if other_edge_id not in all_edges_ids:
-                found_continuous_edges.add(other_edge_id)
+        # This conditions are not enough. In case of a junction that has one incoming and one outgoing edge that are not connected this shouldn't work!!
+        # For example, a dead end (entry/exit to the system) with both an entry and an exit edge
+        # Need to go in deep to know what are the connections of the junctions (and with that can even expand to complex junctions with limited directions)
+        if len(to_node_incoming_edges) <= 1 and len(to_node_outgoing_edges) == 1:
+            # If len(to_node_outgoing_edges) == 0, then it is a sink, and we don't need to add it to the set of continuous edges
+            if to_node.getType() != "dead_end":
+                other_edge = to_node_outgoing_edges[0]
+                other_edge_id = other_edge.getID()
+                if other_edge_id not in all_edges_ids:
+                    found_continuous_edges.add(other_edge_id)
+        if len(from_node_incoming_edges) == 1 and len(from_node_outgoing_edges) <= 1:
+            # If len(from_node_outgoing_edges) == 0, then it is a source, and we don't need to add it to the set of continuous edges
+            if from_node.getType() != "dead_end":
+                other_edge = from_node_incoming_edges[0]
+                other_edge_id = other_edge.getID()
+                if other_edge_id not in all_edges_ids:
+                    found_continuous_edges.add(other_edge_id)
 
     all_edges_ids = get_continuous_edges(net, all_edges_ids, found_continuous_edges)
     return all_edges_ids
 
+
+# Not 100% efficient since, for each edge added, we could just apply recursively on the other end of said edge, instead of on both, by using recursion on the whole set of edges
+# The fact that we are speeding up recursion would also be done. The edge's other end, would now count. Aka, we perform recursion at a edge level, instead of at a network level.
+# The same could apply to the continuous edges function
+def get_deducible_edges(net: sumolib.net.Net, all_edges_ids: set[str], to_get_deducible_edges_ids: set[str], *args, **kwargs) -> set[str]:
+    all_edges_ids = all_edges_ids.union(to_get_deducible_edges_ids)
+    if len(to_get_deducible_edges_ids) == 0:
+        return all_edges_ids
+    found_deducible_edges = set()
+    for edge_id in to_get_deducible_edges_ids:
+        edge: sumolib.net.edge.Edge = net.getEdge(edge_id)
+
+        from_node: sumolib.net.node.Node = edge.getFromNode()
+        to_node: sumolib.net.node.Node = edge.getToNode()
+
+        to_node_incoming_edges = to_node.getIncoming()
+        to_node_outgoing_edges = to_node.getOutgoing()
+        from_node_incoming_edges = from_node.getIncoming()
+        from_node_outgoing_edges = from_node.getOutgoing()
+
+        to_node_incoming_edges_ids = set([edge.getID() for edge in to_node_incoming_edges])
+        to_node_outgoing_edges_ids = set([edge.getID() for edge in to_node_outgoing_edges])
+        to_node_edges_ids = to_node_incoming_edges_ids.union(to_node_outgoing_edges_ids)
+        
+        unknown_to_node_edges_ids = to_node_edges_ids.difference(all_edges_ids)
+        if len(unknown_to_node_edges_ids) == 1:
+            now_known_edge_id = unknown_to_node_edges_ids.pop()
+            found_deducible_edges.add(now_known_edge_id)
+            all_edges_ids.add(now_known_edge_id) # Speed up recursion by adding the edge to the set of known edges right away
+
+        from_node_incoming_edges_ids = set([edge.getID() for edge in from_node_incoming_edges])
+        from_node_outgoing_edges_ids = set([edge.getID() for edge in from_node_outgoing_edges])
+        from_node_edges_ids = from_node_incoming_edges_ids.union(from_node_outgoing_edges_ids)
+        
+        unknown_from_node_edges_ids = from_node_edges_ids.difference(all_edges_ids)
+        if len(unknown_from_node_edges_ids) == 1:
+            now_known_edge_id = unknown_from_node_edges_ids.pop()
+            found_deducible_edges.add(now_known_edge_id)
+            all_edges_ids.add(now_known_edge_id) # Speed up recursion by adding the edge to the set of known edges right away
+
+    all_edges_ids = get_deducible_edges(net, all_edges_ids, found_deducible_edges)
+    return all_edges_ids    
+
 def main(sumo_net_file: str, config_file: str, cut_edges_file: str, output_file: str, *args, **kwargs):
     
-    # Need to do the output file relative to the config file
-    # output_file = os.path.relpath(output_file, os.path.dirname(config_file))
     net = get_net_file(sumo_net_file)
     with open (cut_edges_file, "r") as file:
         cut_edges = file.read().splitlines()
 
+    # Create a new file for the cut edges
     command = f"netconvert -c {config_file} --remove-edges.input-file {cut_edges_file} --sumo-net-file {sumo_net_file} --output-file {output_file}"
     run_system(command)
 
+    #  Create a new file for the continuous edges
     cut_edges_ids = set(cut_edges)
     continuous_cut_edges = get_continuous_edges(net, set(), cut_edges_ids)
-    if cut_edges_ids != continuous_cut_edges:
+    if True or cut_edges_ids != continuous_cut_edges:
         # Create a new file for the updated cut edges
         cut_edges_file_dir = os.path.dirname(cut_edges_file)
         cut_edges_file_truebasename, cut_edges_file_extension = true_basename(cut_edges_file)
@@ -83,6 +128,31 @@ def main(sumo_net_file: str, config_file: str, cut_edges_file: str, output_file:
         continuous_cut_edges_file_path = cut_edges_file
 
     command = f"netconvert -c {config_file} --remove-edges.input-file {continuous_cut_edges_file_path} --sumo-net-file {sumo_net_file} --output-file {kwargs["o2"]}"
+    run_system(command)
+    
+
+
+    # Create a new file for the deducible edges
+    continuous_cut_edges_ids = continuous_cut_edges
+    deducible_cut_edges = get_deducible_edges(net, set(), continuous_cut_edges_ids)
+
+    if True or continuous_cut_edges_ids != deducible_cut_edges:
+        # Create a new file for the updated cut edges
+        cut_edges_file_dir = os.path.dirname(continuous_cut_edges_file_path)
+        cut_edges_file_truebasename, cut_edges_file_extension = true_basename(cut_edges_file)
+        if "time" in kwargs:
+            time = kwargs["time"]
+        else:
+            time = get_current_time_file_format()
+        deducible_cut_edges_file = f"{cut_edges_file_truebasename}_deducible_{time}{cut_edges_file_extension}"
+        deducible_cut_edges_file_path = os.path.join(cut_edges_file_dir, deducible_cut_edges_file)
+    
+        with open(deducible_cut_edges_file_path, "w") as f:
+            f.write("\n".join(deducible_cut_edges))
+    else:
+        deducible_cut_edges_file_path = continuous_cut_edges_file_path
+
+    command = f"netconvert -c {config_file} --remove-edges.input-file {deducible_cut_edges_file_path} --sumo-net-file {sumo_net_file} --output-file {kwargs["o3"]}"
     run_system(command)
 
 def parse_arguments():
@@ -124,8 +194,11 @@ if __name__ == "__main__":
         output_time = get_current_time_file_format()
         output_file = os.path.join(sumo_net_file_path, f"{sumo_net_file_truebasename}{SYSTEMS_FILENAME_SUFFIX}_{output_time}.net.xml")
         output_file_2 = os.path.join(sumo_net_file_path, f"{sumo_net_file_truebasename}{SYSTEMS_FILENAME_SUFFIX}_continuous_{output_time}.net.xml")
+        output_file_3 = os.path.join(sumo_net_file_path, f"{sumo_net_file_truebasename}{SYSTEMS_FILENAME_SUFFIX}_deducible_{output_time}.net.xml")
+
     else:
+        
         output_file = args.output
     # Call the main function with parsed arguments
 
-    main(sumo_net_file, config_file, cut_edges_file, output_file, **{"time": output_time, "o2": output_file_2})
+    main(sumo_net_file, config_file, cut_edges_file, output_file, **{"time": output_time, "o2": output_file_2, "o3": output_file_3})
