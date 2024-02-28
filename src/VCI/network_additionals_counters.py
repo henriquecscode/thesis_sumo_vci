@@ -34,6 +34,7 @@ def main(root: ET.Element  , net: sumolib.net.Net, *args, **kwargs) -> ET.Elemen
     all_junctions = net.getNodes()
 
     # Create detectors after the junction for junctions with different number of incoming and outgoing edges
+    # Junctions with the same number of edges but different number of lanes are not considered
     for junction in all_junctions:
         incoming = junction.getIncoming()
         outgoing = junction.getOutgoing()
