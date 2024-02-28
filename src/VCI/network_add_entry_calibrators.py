@@ -12,37 +12,24 @@ from src.VCI.utils.sumo_lib_net import create_additionals_root
 from src.VCI.utils.xml_utils import write_root
 
 DEFAULT_SUMO_NET_FILE = "networks\\filter_by_edge.net.xml"
-DEFAULT_NETWORK_CONNECTIONS_FILE = "networks\\filter_by_edge_network_connections.txt"
+DEFAULT_NETWORK_CONNECTION_EDGES_FILE = "networks\\filter_by_edge_network_connection_edges.txt"
 DEFAULT_SUMO_ADDITIONALS_FILE = "networks\\filter_by_edge.add.xml"
-NETWORK_ADDITIONALS_FILENAME_SUFFIX = "_calibrators"
-CALIBRATOR_LENGTH = 2.0
-def main(root: ET.Element, net: sumolib.net.Net, junctions: set[sumolib.net.node.Node], *args, **kwargs) -> ET.Element:
-    for junction in junctions:
-        incoming = junction.getIncoming()
-        incoming_is_entry = [False] * len(incoming)
-        incoming_with_is_entry = zip(incoming, incoming_is_entry)
-        outgoing = junction.getOutgoing()
-        outgoing_is_entry = [True] * len(outgoing)
-        outgoing_with_is_entry = zip(outgoing, outgoing_is_entry)
-        
-        all_edges_with_entry = list(incoming_with_is_entry) + list(outgoing_with_is_entry)
-        for edge, is_entry in all_edges_with_entry:
-            for lane in edge.getLanes():
-                calibrator = get_lanes_lane_calibrator_element(lane, edge, is_entry)
-                root.append(calibrator)
+NETWORK_ADDITIONALS_FILENAME_SUFFIX = "_entry_calibrators"
+def main(root: ET.Element, net: sumolib.net.Net, edges: set[sumolib.net.edge.Edge], *args, **kwargs) -> ET.Element:
+    for edge in edges:
+        for lane in edge.getLanes():
+            calibrator = get_lanes_lane_calibrator_element(lane, edge)
+            root.append(calibrator)
         
     return root
 
-def get_lanes_lane_calibrator_element(lane:sumolib.net.lane.Lane, parent_edge: sumolib.net.edge.Edge, is_entry: bool, *args, **kwargs) -> ET.Element:
+def get_lanes_lane_calibrator_element(lane:sumolib.net.lane.Lane, parent_edge: sumolib.net.edge.Edge, *args, **kwargs) -> ET.Element:
     lane_id = lane.getID()
     calibrator_id = f"ca_{lane_id}"
     calibrator = ET.Element("calibrator")
     calibrator.set("id", calibrator_id)
     calibrator.set("lane", lane_id)
-    if is_entry:
-        calibrator_pos = str(0.0)
-    else:
-        calibrator_pos = str(lane.getLength()-CALIBRATOR_LENGTH)
+    calibrator_pos = str(0.0)
     calibrator.set("pos", calibrator_pos)
     calibrator.set("output", calibrator_id)
     return calibrator
@@ -52,15 +39,10 @@ def parse_arguments():
 
     # Add command line arguments
     parser.add_argument('--sumo-net-file', '-s', type=str, help='Path to the SUMO network file')
-    parser.add_argument('--network-connections-file', type=str, help='Path to the network connections file')
+    parser.add_argument('--network-connection-edges-file', type=str, help='Path to the network connection edges file')
     parser.add_argument("--output", "-o", type=str, help="Path to the output file")
     parser.add_argument('--network-additionals-file', type=str, help='Path to the network additionals file')
     parser.add_argument('--overwrite', action='store_true', help='Overwrite the input network additionals file. Ignore Output argument')
-
-
-
-    #parser.add_argument('arg1', type=str, help='Description of arg1')
-    #parser.add_argument('--arg2', type=int, default=10, help='Description of arg2 (default: 10)')
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -74,10 +56,10 @@ if __name__ == "__main__":
     else:
         sumo_net_file = args.sumo_net_file
 
-    if args.network_connections_file is None:
-        network_connections_file = DEFAULT_NETWORK_CONNECTIONS_FILE
+    if args.network_connection_edges_file is None:
+        network_connection_edges_file = DEFAULT_NETWORK_CONNECTION_EDGES_FILE
     else:
-        network_connections_file = args.network_connections_file
+        network_connection_edges_file = args.network_connection_edges_file
 
     if args.network_additionals_file is None:
         network_additionals_file = DEFAULT_SUMO_ADDITIONALS_FILE
@@ -102,12 +84,13 @@ if __name__ == "__main__":
 
     # Call the main function with parsed arguments
     net = get_net_file(sumo_net_file)
-    df = pd.read_csv(network_connections_file)
-    junctions_ids = df['id'].astype('str').tolist()
+    df = pd.read_csv(network_connection_edges_file)
+    only_entries = df[df['type'] == 'entry']
+    edges_ids = only_entries['id'].astype('str').tolist()
 
-    junctions = {net.getNode(junc_id) for junc_id in junctions_ids}
+    edges = {net.getEdge(edge_id) for edge_id in edges_ids}
     
-    root = main(root, net, junctions, args)
+    root = main(root, net, edges, args)
 
     # Save to mem
     write_root(root, output)
