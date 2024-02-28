@@ -1,5 +1,5 @@
-# Takes a network and a set of entry or exit junctions
-# Outputs an additional file with calibrators for each lane in the entry or exit edges
+# Takes a network and a set of edges
+# Outputs an additional file with calibrators at the start of each lane
 import argparse
 import os
 import sumolib
