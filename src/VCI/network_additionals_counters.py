@@ -1,4 +1,4 @@
-# Takes a network
+# Takes a network and creates an additionals file with counters after a junction where the number of incoming and outgoing edges are greater than 1
 import argparse
 import os
 import sumolib
@@ -38,7 +38,7 @@ def main(root: ET.Element  , net: sumolib.net.Net, *args, **kwargs) -> ET.Elemen
     for junction in all_junctions:
         incoming = junction.getIncoming()
         outgoing = junction.getOutgoing()
-        if len(incoming) != len(outgoing):
+        if len(incoming) > 1 or  len(outgoing) > 1:
             for edge in outgoing:
                 for lane in edge.getLanes():
                     inductionLoop = get_lane_induction_loop_element(lane)
