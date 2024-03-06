@@ -31,7 +31,7 @@ def get_lanes_lane_calibrator_element(lane:sumolib.net.lane.Lane, parent_edge: s
     calibrator.set("lane", lane_id)
     calibrator_pos = str(0.0)
     calibrator.set("pos", calibrator_pos)
-    calibrator.set("output", calibrator_id)
+    calibrator.set("output", "entry_calibrators_output.xml")
     return calibrator
 
 def parse_arguments():

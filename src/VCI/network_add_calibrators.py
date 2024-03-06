@@ -44,7 +44,7 @@ def get_lanes_lane_calibrator_element(lane:sumolib.net.lane.Lane, parent_edge: s
     else:
         calibrator_pos = str(lane.getLength()-CALIBRATOR_LENGTH)
     calibrator.set("pos", calibrator_pos)
-    calibrator.set("output", calibrator_id)
+    calibrator.set("output", "calibrators_output.xml")
     return calibrator
 
 def parse_arguments():
