@@ -13,7 +13,7 @@ DEFAULT_SUMO_ADDITIONALS_FILE = "networks\\filter_by_edge.add.xml"
 NETWORK_ADDITIONALS_FILENAME_SUFFIX = "_counters"
 DEFAULT_INDUCTION_LOOP_PERIOD = 300.00
 DEFAULT_INDUCTION_LOOP_OFFSET = 0
-DEFAULT_INDUCTION_LOOP_OUTPUT_NAME = "e_output.xml"
+DEFAULT_INDUCTION_LOOP_OUTPUT_FILE = "e_output.xml"
 
 def get_lane_induction_loop_element(lane:sumolib.net.lane.Lane, *args, **kwargs) -> ET.Element:
     lane_id = lane.getID()
@@ -21,12 +21,12 @@ def get_lane_induction_loop_element(lane:sumolib.net.lane.Lane, *args, **kwargs)
     inductionLoop = ET.Element("inductionLoop")
     inductionLoop_pos = str(DEFAULT_INDUCTION_LOOP_OFFSET)
     inductionLoop_period = str(DEFAULT_INDUCTION_LOOP_PERIOD)
-    inductionLoop_output = DEFAULT_INDUCTION_LOOP_OUTPUT_NAME
+    inductionLoop_output = DEFAULT_INDUCTION_LOOP_OUTPUT_FILE
     inductionLoop.set("id", inductionLoop_id)
     inductionLoop.set("lane", lane_id)
     inductionLoop.set("pos", inductionLoop_pos)
     inductionLoop.set("period", inductionLoop_period)
-    inductionLoop.set("file", f"{DEFAULT_INDUCTION_LOOP_OUTPUT_NAME}.xml")
+    inductionLoop.set("file", f"{DEFAULT_INDUCTION_LOOP_OUTPUT_FILE}")
     return inductionLoop
 
 def main(root: ET.Element  , net: sumolib.net.Net, *args, **kwargs) -> ET.Element:
